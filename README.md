@@ -1,63 +1,27 @@
-# move-tech-orders-api-pipeline
+#  API de Pedidos - Automação e Deploy na Magalu Cloud
 
-Repositório starter para o **Lab H3 · Ligar a esteira CI/CD** do curso Move Tech (Magalu × Prósper Digital Skills).
+##  Sobre o Projeto
+Este repositório contém a evolução de uma API estática para um ambiente totalmente automatizado e escalável. O foco principal foi a implementação de uma esteira completa de Integração e Entrega Contínuas (CI/CD) e o provisionamento de infraestrutura em nuvem, garantindo segurança e alta disponibilidade.
 
-## O que tem aqui
+## 🛠️Arquitetura e Tecnologias
+* **Cloud Provider:** Magalu Cloud
+* **Orquestração de Contêineres:** Kubernetes (K3s)
+* **CI/CD:** GitHub Actions
+* **Containerização:** Docker & Magalu Container Registry
+* **Rede e Roteamento:** Traefik Ingress Controller
+* **Segurança:** Gestão de Secrets nativos do Kubernetes e configuração rigorosa de Security Groups (Firewall).
 
-| Arquivo / Pasta | O que é |
-|----------------|---------|
-| `app/main.py` | API de Pedidos em FastAPI (in-memory) |
-| `Dockerfile` | Empacota a API em uma imagem Docker |
-| `docker-compose.yml` | Sobe a aplicação localmente |
-| `tests/test_main.py` | Testes automatizados com pytest |
-| `k8s/app.yaml` | Manifesto Kubernetes (usa `$IMAGE` como placeholder) |
-| `pyproject.toml` | Dependências gerenciadas com Poetry |
+## A Esteira de Automação (GitHub Actions)
+O arquivo `.github/workflows/deploy.yml` orquestra o seguinte fluxo:
+1. Validação da estrutura de código a cada novo `push`.
+2. Autenticação segura no Container Registry da Magalu Cloud via Secrets.
+3. Build da imagem Docker da API.
+4. Tagueamento automático e envio (Push) da imagem pronta para o cofre na nuvem.
 
-## O que você vai adicionar
+##  Troubleshooting & Desafios Solucionados
+Durante o ciclo de vida da implantação, cenários reais de infraestrutura foram diagnosticados e resolvidos:
+* **Resolução de `ImagePullBackOff`:** Diagnóstico de falha de autenticação do Kubernetes. O problema foi corrigido aplicando o conceito de isolamento de segurança, injetando o Secret de credenciais do repositório de imagens diretamente no namespace correto (`move-tech-api`), permitindo que os Pods baixassem a imagem.
+* **Resolução de `ERR_CONNECTION_TIMED_OUT`:** Diagnóstico de bloqueio de rede na camada de nuvem. O tráfego foi restabelecido criando uma regra de entrada (Inbound Rule) no Security Group da Magalu Cloud, liberando o protocolo TCP na porta 80 para o Ingress Controller.
 
-No lab, você vai criar:
-
-- `.github/workflows/deploy.yml` — pipeline CI/CD que testa, empacota e faz deploy automaticamente
-
-## Endpoints da API
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/health` | Status da aplicação |
-| POST | `/orders` | Criar pedido |
-| GET | `/orders` | Listar pedidos |
-| GET | `/orders/{id}` | Buscar pedido |
-| DELETE | `/orders/{id}` | Cancelar pedido |
-| POST | `/orders/{id}/items` | Adicionar item |
-| GET | `/orders/{id}/items` | Listar itens |
-
-Documentação interativa disponível em `http://localhost:8000/docs` após subir o container.
-
-## Testar localmente
-
-```bash
-# Com Docker
-docker compose up --build
-
-# Sem Docker (requer Poetry)
-poetry install
-poetry run uvicorn app.main:app --reload --port 8000
-
-# Rodar testes
-poetry run pytest
-```
-
-## Secrets necessários no GitHub
-
-Configure os seguintes secrets em **Settings → Secrets and variables → Actions** do seu repositório:
-
-| Secret | Descrição |
-|--------|-----------|
-| `MGC_REGISTRY_USER` | Usuário do Container Registry da Magalu Cloud |
-| `MGC_REGISTRY_PASSWORD` | Senha do Container Registry |
-| `MGC_REGISTRY_NAME` | Nome do seu registry (ex: `meu-registry`) |
-| `MGC_KUBECONFIG` | Conteúdo do kubeconfig do cluster K3s |
-
-## Próximo passo
-
-Após concluir este lab, avance para o **Lab H4 · Persistência com banco de dados** onde a API será conectada a um banco PostgreSQL.
+## Acesso
+A aplicação está conteinerizada, rodando com réplicas para alta disponibilidade, e sua documentação interativa (Swagger) pode ser acessada publicamente via IP da Máquina Virtual, validando a integração de ponta a ponta.
